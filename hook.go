@@ -48,16 +48,13 @@ func (r *hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (c
 		cmdNameBuf.WriteString(getCmdName(cmd))
 	}
 
-	pipelineSpan, ctx := opentracing.StartSpanFromContext(ctx, "(pipeline)")
+	pipelineSpan, ctx := opentracing.StartSpanFromContext(ctx, cmdNameBuf.String())
 	ext.Component.Set(pipelineSpan, "redis")
 	ext.DBType.Set(pipelineSpan, "redis")
 	ext.SpanKind.Set(pipelineSpan, "client")
 
 	for i := len(cmds); i > 0; i-- {
-		cmdName := strings.ToUpper(cmds[i-1].Name())
-		if cmdName == "" {
-			cmdName = "(empty command)"
-		}
+		cmdName := getCmdName(cmds[i-1])
 
 		span, _ := opentracing.StartSpanFromContext(ctx, cmdName)
 		ext.Component.Set(span, "redis")
