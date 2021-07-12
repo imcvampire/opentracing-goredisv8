@@ -1,4 +1,4 @@
-module github.com/imcvampire/otredis
+module github.com/imcvampire/opentracing-goredisv8
 
 go 1.16
 
