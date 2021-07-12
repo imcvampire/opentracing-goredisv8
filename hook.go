@@ -53,14 +53,14 @@ func (r *hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (c
 	ext.DBType.Set(pipelineSpan, "redis")
 	ext.SpanKind.Set(pipelineSpan, "client")
 
-	for i := len(cmds); i > 0; i-- {
-		cmdName := getCmdName(cmds[i-1])
+	for i := len(cmds) - 1; i >= 0; i-- {
+		cmdName := getCmdName(cmds[i])
 
 		span, _ := opentracing.StartSpanFromContext(ctx, cmdName)
 		ext.Component.Set(span, "redis")
 		ext.DBType.Set(span, "redis")
 		ext.SpanKind.Set(span, "client")
-		ext.DBStatement.Set(span, fmt.Sprintf("%v", cmds[i-1].Args()))
+		ext.DBStatement.Set(span, fmt.Sprintf("%v", cmds[i].Args()))
 	}
 	return ctx, nil
 }
