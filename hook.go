@@ -49,9 +49,9 @@ func (r *hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (c
 	}
 
 	pipelineSpan, ctx := opentracing.StartSpanFromContext(ctx, "(pipeline)")
-	ext.Component.Set(span, "redis")
-	ext.DBType.Set(span, "redis")
-	ext.SpanKind.Set(span, "client")
+	ext.Component.Set(pipelineSpan, "redis")
+	ext.DBType.Set(pipelineSpan, "redis")
+	ext.SpanKind.Set(pipelineSpan, "client")
 
 	for i := len(cmds); i > 0; i-- {
 		cmdName := strings.ToUpper(cmds[i-1].Name())
@@ -75,7 +75,6 @@ func (r *hook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) err
 	}
 	return nil
 }
-
 
 func getCmdName(cmd redis.Cmder) string {
 	cmdName := strings.ToUpper(cmd.Name())
