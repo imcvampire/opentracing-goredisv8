@@ -32,6 +32,9 @@ func (r *hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Cont
 // AfterProcess ends the initiated span from BeforeProcess
 func (r *hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if span := opentracing.SpanFromContext(ctx); span != nil {
+		if err := cmd.Err(); err != nil {
+			handleError(ctx, "redis.error", span, err)
+		}
 		span.Finish()
 	}
 	return nil
@@ -79,4 +82,11 @@ func getCmdName(cmd redis.Cmder) string {
 		cmdName = "(empty command)"
 	}
 	return cmdName
+}
+
+func handleError(ctx context.Context, errorTag string, span opentracing.Span, err error) {
+	if err != redis.Nil && err != nil {
+		span.SetTag(string(ext.Error), true)
+		span.SetTag(errorTag, err.Error())
+	}
 }
