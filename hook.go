@@ -19,13 +19,6 @@ func NewHook() redis.Hook {
 	return &hook{}
 }
 
-func handleError(ctx context.Context, errorTag string, span opentracing.Span, err error) {
-	if err != redis.Nil && err != nil {
-		span.SetTag(string(ext.Error), true)
-		span.SetTag(errorTag, err.Error())
-	}
-}
-
 // BeforeProcess initiates the span for the redis cmd
 func (r *hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, getCmdName(cmd))
@@ -89,4 +82,11 @@ func getCmdName(cmd redis.Cmder) string {
 		cmdName = "(empty command)"
 	}
 	return cmdName
+}
+
+func handleError(ctx context.Context, errorTag string, span opentracing.Span, err error) {
+	if err != redis.Nil && err != nil {
+		span.SetTag(string(ext.Error), true)
+		span.SetTag(errorTag, err.Error())
+	}
 }
