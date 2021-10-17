@@ -11,17 +11,17 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+// hook is an implementation of redis.Hook that reports cmds as spans.
+type hook struct {
+	tracer opentracing.Tracer
+}
+
 type ApplyOption func(h *hook)
 
 func WithTracer(tracer opentracing.Tracer) ApplyOption {
 	return func(h *hook) {
 		h.tracer = tracer
 	}
-}
-
-// hook is an implementation of redis.Hook that reports cmds as spans.
-type hook struct {
-	tracer opentracing.Tracer
 }
 
 // NewHook returns a redis.Hook that reports cmds as spans.
