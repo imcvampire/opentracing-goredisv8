@@ -12,16 +12,33 @@ import (
 )
 
 // hook is an implementation of redis.Hook that reports cmds as spans.
-type hook struct{}
+type hook struct {
+	tracer opentracing.Tracer
+}
+
+type ApplyOption func(h *hook)
+
+func WithTracer(tracer opentracing.Tracer) ApplyOption {
+	return func(h *hook) {
+		h.tracer = tracer
+	}
+}
 
 // NewHook returns a redis.Hook that reports cmds as spans.
-func NewHook() redis.Hook {
-	return &hook{}
+// for default, hook will use global tracer for tracing.
+func NewHook(opts ...ApplyOption) redis.Hook {
+	h := &hook{
+		tracer: opentracing.GlobalTracer(),
+	}
+	for _, apply := range opts {
+		apply(h)
+	}
+	return h
 }
 
 // BeforeProcess initiates the span for the redis cmd
 func (r *hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, getCmdName(cmd))
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, getCmdName(cmd))
 	ext.Component.Set(span, "redis")
 	ext.DBType.Set(span, "redis")
 	ext.SpanKind.Set(span, "client")
@@ -51,7 +68,7 @@ func (r *hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (c
 		cmdNameBuf.WriteString(getCmdName(cmd))
 	}
 
-	pipelineSpan, ctx := opentracing.StartSpanFromContext(ctx, cmdNameBuf.String())
+	pipelineSpan, ctx := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, cmdNameBuf.String())
 	ext.Component.Set(pipelineSpan, "redis")
 	ext.DBType.Set(pipelineSpan, "redis")
 	ext.SpanKind.Set(pipelineSpan, "client")
@@ -59,7 +76,7 @@ func (r *hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (c
 	for i := len(cmds) - 1; i >= 0; i-- {
 		cmdName := getCmdName(cmds[i])
 
-		span, _ := opentracing.StartSpanFromContext(ctx, cmdName)
+		span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, cmdName)
 		ext.Component.Set(span, "redis")
 		ext.DBType.Set(span, "redis")
 		ext.SpanKind.Set(span, "client")
