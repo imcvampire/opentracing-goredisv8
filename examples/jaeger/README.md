@@ -32,4 +32,5 @@ you should see result as the images below.
 
 ![](./images/service.png)
 2. Discovery a request via span.
+
 ![](./images/discovery.png)
